@@ -10,7 +10,7 @@ services:
       - /data/dags:/data/dags
     environment:
       # URL репозитория с встроенными учетными данными для аутентификации
-      REPOURL: https://git_for_airflow:glpat-2Hsh5WNtBYt_pHreoDhL@scm.sib.rual.ru/gitlab/airflow/airflow_tasks.git
+      
       
       # Ветка, которую необходимо отслеживать
       GIT_BRANCH: main

@@ -1,2 +1,9 @@
 Ошибка возникает при попытке соединения:
 You dont have 'mysqlclient' package installed. Please install it with 'pip install mysqlclien' and make sure you hame system mysql libraries installed, as well as well as 'pkg-conifg' system package installed in case you see compilation error during installation
+
+(.venv) [airflow@kraz-s-mesair01 ~]$ pkg-config --cflags mysqlclient
+-I/usr/include/mysql -m64
+(.venv) [airflow@kraz-s-mesair01 ~]$ which python
+~/.venv/bin/python
+(.venv) [airflow@kraz-s-mesair01 ~]$ which airflow
+~/.venv/bin/airflow

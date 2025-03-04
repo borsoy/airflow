@@ -11,3 +11,96 @@ You dont have 'mysqlclient' package installed. Please install it with 'pip insta
 
  ldd $(python -c "import MySQLdb; print(MySQLdb.__file__)") | grep mysql
 ldd: warning: you do not have execution permission for `/home/airflow/.venv/lib64/python3.11/site-packages/MySQLdb/__init__.py'
+
+Ошибка  
+```
+ldd: warning: you do not have execution permission for `/home/airflow/.venv/lib64/python3.11/site-packages/MySQLdb/__init__.py'
+```  
+указывает, что `ldd` пытается проверить зависимости у файла `__init__.py`, который *не является исполняемым файлом или динамической библиотекой*.  
+
+### **Что делать дальше?**
+
+#### **1. Проверить, установлен ли `mysqlclient` и пути к файлам**
+Попробуй выполнить:  
+```bash
+pip show mysqlclient
+```  
+Ты должен увидеть информацию о пакете, включая его путь (`Location`).  
+
+Далее попробуй найти `libmysqlclient.so`:  
+```bash
+find /home/airflow/.venv -name "libmysqlclient*.so*"  
+```
+Если там ничего нет, значит, виртуальная среда `venv` не имеет доступа к MySQL-библиотеке.
+
+#### **2. Проверить зависимости правильного файла (`.so`, а не `__init__.py`)**  
+Вместо `__init__.py`, нужно проверить `*.so`-библиотеку в пакете:  
+```bash
+python -c "import MySQLdb; print(MySQLdb.__file__)"
+```
+Допустим, он вернул такой путь:  
+```
+/home/airflow/.venv/lib/python3.11/site-packages/MySQLdb/__init__.py
+```
+Обычно `.so`-файл будет в той же папке. Проверим:  
+```bash
+ls -l /home/airflow/.venv/lib/python3.11/site-packages/MySQLdb/
+```
+Найди файл вида `*.so`, например, `cymysql.so` или `mysqlclient.so`.  
+
+Теперь выполни:  
+```bash
+ldd /home/airflow/.venv/lib/python3.11/site-packages/MySQLdb/mysqlclient.so
+```
+(замени `mysqlclient.so` на фактическое имя файла, если оно другое)  
+Если в выводе есть `not found`, значит, системе не хватает библиотек.
+
+#### **3. Установка недостающих библиотек**  
+Проблема может быть в отсутствии `libmysqlclient.so`. Исправить можно так:
+
+##### **Для CentOS / RHEL / Rocky Linux / AlmaLinux**  
+```bash
+sudo yum install -y mariadb-devel
+```
+##### **Для Ubuntu / Debian**  
+```bash
+sudo apt update && sudo apt install -y libmysqlclient-dev
+```
+##### **Для Arch Linux**  
+```bash
+sudo pacman -S mariadb-libs
+```
+
+#### **4. Проверить, видит ли система `libmysqlclient.so`**  
+После установки пакетов проверь, где находится `libmysqlclient.so`:  
+```bash
+find /usr -name "libmysqlclient.so*"
+```
+Обычно файл будет в `/usr/lib64/` или `/usr/lib/x86_64-linux-gnu/`.
+
+Если библиотека есть, но Python всё равно не видит её, добавь путь принудительно:  
+```bash
+export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH
+```
+(замени `/usr/lib64` на актуальный путь, который нашёл `find`).
+
+#### **5. Перезапустить виртуальную среду и Airflow**  
+Теперь перезапустим виртуальную среду, чтобы обновились пути:  
+```bash
+deactivate
+source /home/airflow/.venv/bin/activate
+```
+Попробуй снова:  
+```bash
+python -c "import MySQLdb"
+```
+Если ошибки нет, запусти Airflow:  
+```bash
+airflow db init
+airflow webserver
+```
+
+---
+
+### **Вывод**
+Твой случай — это обычная проблема недостающих зависимостей (`libmysqlclient.so`).

@@ -7,3 +7,7 @@ You dont have 'mysqlclient' package installed. Please install it with 'pip insta
 ~/.venv/bin/python
 (.venv) [airflow@kraz-s-mesair01 ~]$ which airflow
 ~/.venv/bin/airflow
+
+
+ ldd $(python -c "import MySQLdb; print(MySQLdb.__file__)") | grep mysql
+ldd: warning: you do not have execution permission for `/home/airflow/.venv/lib64/python3.11/site-packages/MySQLdb/__init__.py'
